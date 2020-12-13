@@ -1,0 +1,54 @@
+html {
+  background-image: url("https://img.freepik.com/vetores-gratis/padrao-de-memphis_1045-810.jpg?size=338c&ext=jpg");
+  background-repeat: repeat;
+}
+
+#site-wrapper {
+  transition-duration: 0.5s;
+  transition-timing-function: cubic-bezier(.28,.54,.02,1);
+  min-height: 85vh;
+
+  margin-top: 25px;
+  margin-bottom: 25px;
+}
+
+#site-bg {
+
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100%;
+  max-height: 100%;
+
+  margin: 0 !important;
+  padding: 0 !important;
+  top: 0;
+  left: 0;
+
+  /*background-image: url("https://img.freepik.com/vetores-gratis/padrao-de-memphis_1045-810.jpg?size=338c&ext=jpg");
+  background-repeat: repeat;*/
+
+  /* filter: invert(100%); */
+
+}
+
+.uk-container {
+  transition-duration: 0.15s;
+}
+
+.uk-card {
+  transition-duration: 0.15s;
+}
+
+.uk-input,
+.uk-button {
+  border-radius: 17px;
+}
+
+.uk-input[name='register-firstname'] {
+  border-radius: 17px 0px 0px 17px;
+}
+
+.uk-input[name='register-lastname'] {
+  border-radius: 0px 17px 17px 0px;
+}

@@ -1,0 +1,16 @@
+/* Small Monitor */
+@media (max-width: 1200px) {
+
+}
+
+/* Tablet */
+@media (max-width: 992px) {
+  #UserBio {
+    font-size: 13px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+
+}
