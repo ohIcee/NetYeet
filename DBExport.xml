@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+- phpMyAdmin XML Dump
+- version 4.6.6deb5
+- https://www.phpmyadmin.net
+-
+- Host: <>
+- Generation Time: Dec 13, 2020 at 06:18 PM
+- Server version: 5.7.22-0ubuntu0.17.10.1
+- PHP Version: 7.1.17-0ubuntu0.17.10.1
+-->
+
+<pma_xml_export version="1.0" xmlns:pma="https://www.phpmyadmin.net/some_doc_url/">
+    <!--
+    - Structure schemas
+    -->
+    <pma:structure_schemas>
+        <pma:database name="Dripp" collation="utf8mb4_bin" charset="utf8mb4">
+            <pma:table name="LikedPosts">
+                CREATE TABLE `LikedPosts` (
+                  `ID` int(11) NOT NULL AUTO_INCREMENT,
+                  `PostID` int(11) NOT NULL,
+                  `UserID` int(11) NOT NULL,
+                  `DateLiked` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  PRIMARY KEY (`ID`),
+                  KEY `PostID` (`PostID`),
+                  KEY `UserID` (`UserID`),
+                  CONSTRAINT `LikedPosts_ibfk_1` FOREIGN KEY (`PostID`) REFERENCES `posts` (`ID`),
+                  CONSTRAINT `LikedPosts_ibfk_2` FOREIGN KEY (`UserID`) REFERENCES `users` (`ID`)
+                ) ENGINE=InnoDB AUTO_INCREMENT=87 DEFAULT CHARSET=latin1;
+            </pma:table>
+            <pma:table name="PostComments">
+                CREATE TABLE `PostComments` (
+                  `ID` int(11) NOT NULL AUTO_INCREMENT,
+                  `CommenterID` int(11) NOT NULL,
+                  `PostID` int(11) DEFAULT NULL,
+                  `Content` varchar(1000) COLLATE utf8mb4_bin NOT NULL,
+                  `DateCommented` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  PRIMARY KEY (`ID`),
+                  KEY `CommenterID` (`CommenterID`),
+                  KEY `PostID` (`PostID`)
+                ) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+            </pma:table>
+            <pma:table name="posts">
+                CREATE TABLE `posts` (
+                  `ID` int(11) NOT NULL AUTO_INCREMENT,
+                  `PosterID` int(11) NOT NULL,
+                  `PublishDate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  `Content` varchar(200) COLLATE utf8mb4_bin NOT NULL,
+                  `Type` tinyint(2) NOT NULL,
+                  `ImageName` varchar(150) COLLATE utf8mb4_bin NOT NULL,
+                  `Privacy` int(11) NOT NULL DEFAULT '1',
+                  PRIMARY KEY (`ID`),
+                  KEY `PosterID` (`PosterID`),
+                  CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`PosterID`) REFERENCES `users` (`ID`)
+                ) ENGINE=InnoDB AUTO_INCREMENT=208 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+            </pma:table>
+            <pma:table name="UserFollows">
+                CREATE TABLE `UserFollows` (
+                  `ID` int(11) NOT NULL AUTO_INCREMENT,
+                  `UserID` int(11) NOT NULL,
+                  `FollowID` int(11) NOT NULL,
+                  `DateAdded` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  PRIMARY KEY (`ID`),
+                  KEY `UserID` (`UserID`),
+                  KEY `FriendID` (`FollowID`),
+                  CONSTRAINT `UserFollows_ibfk_1` FOREIGN KEY (`UserID`) REFERENCES `users` (`ID`),
+                  CONSTRAINT `UserFollows_ibfk_2` FOREIGN KEY (`FollowID`) REFERENCES `users` (`ID`)
+                ) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=latin1;
+            </pma:table>
+            <pma:table name="users">
+                CREATE TABLE `users` (
+                  `ID` int(11) NOT NULL AUTO_INCREMENT,
+                  `Username` varchar(20) CHARACTER SET utf8mb4 NOT NULL,
+                  `Email` varchar(50) CHARACTER SET utf8mb4 NOT NULL,
+                  `ShowEmail` tinyint(1) NOT NULL DEFAULT '0',
+                  `Password` varchar(200) CHARACTER SET utf8mb4 NOT NULL,
+                  `DOB` date DEFAULT NULL,
+                  `ShowDOB` tinyint(1) NOT NULL DEFAULT '0',
+                  `Gender` varchar(5) CHARACTER SET utf8mb4 NOT NULL,
+                  `ShowGender` tinyint(1) NOT NULL DEFAULT '0',
+                  `Bio` varchar(250) CHARACTER SET utf8mb4 DEFAULT NULL,
+                  `Location` varchar(150) CHARACTER SET utf8mb4 DEFAULT NULL,
+                  `ShowLocation` tinyint(1) NOT NULL DEFAULT '0',
+                  `Website` varchar(150) CHARACTER SET utf8mb4 DEFAULT NULL,
+                  `ShowWebsite` tinyint(1) NOT NULL DEFAULT '0',
+                  `JoinDate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  `ProfilePictureName` varchar(150) CHARACTER SET utf8mb4 NOT NULL DEFAULT 'default_profile_picture.jpg',
+                  `ConfirmCode` varchar(150) CHARACTER SET utf8mb4 DEFAULT NULL,
+                  `Active` tinyint(1) NOT NULL DEFAULT '0',
+                  PRIMARY KEY (`ID`)
+                ) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+            </pma:table>
+        </pma:database>
+    </pma:structure_schemas>
+</pma_xml_export>
