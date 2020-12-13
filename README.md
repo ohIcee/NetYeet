@@ -2,6 +2,8 @@
     <img width="100%" height="100%" src="https://i.imgur.com/bOh1AEE.png"> 
 </p>
 
+[DEMO THE PROJECT](https://byicee.me/projects/NetYeet)
+
 This is my High School graduation project, a Social Network made with [PHP](https://www.php.net/).
 
 This app is **NOT** suitable for use in a production environment!
