@@ -31,7 +31,7 @@ function LoadFollowers() {
 
   $.ajax({
     url: 'php/HelperFunctions.php',
-    type: 'POST',
+    type: 'GET',
     data: {
       ajaxCommand: 'GetFollowers',
       id: profileID
@@ -59,7 +59,7 @@ function LoadFollowers() {
 function LoadFollowing() {
   $.ajax({
     url: 'php/HelperFunctions.php',
-    type: 'POST',
+    type: 'GET',
     data: {
       ajaxCommand: 'GetFollowingUserInfo',
       id: profileID

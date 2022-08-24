@@ -1,7 +1,5 @@
 var lastOpenedPostCommentsID;
 
-// TODO COMMENT LIKES
-
 function OpenPostComments(postID) {
   lastOpenedPostCommentsID = postID;
 
@@ -14,7 +12,7 @@ function OpenPostComments(postID) {
 function GetPostComments(postID) {
   $.ajax({
     url: 'php/HelperFunctions.php',
-    type: "POST",
+    type: "GET",
     data: {
       ajaxCommand: 'GetPostComments',
       PostID: postID
@@ -71,7 +69,7 @@ function NewComment(comment) {
   newcomm +=    "<div class='text'>"+content+"</div>";
   newcomm +=    "<div class='actions'>";
   newcomm +=      "<a onclick='GetCommentID("+comment.ID+")' class='ui brown tiny header'>Reply</a>";
-  if (Number(loggedUserID) == Number(comment.CommenterID)) {
+  if (typeof loggedUserID !== "undefined" && Number(loggedUserID) === Number(comment.CommenterID)) {
     newcomm +=      "<a onclick='ShowConfirmDeleteComment("+comment.ID+")'>Delete Comment</a>";
   }
   newcomm +=    "</div>";
@@ -87,9 +85,6 @@ function ShowConfirmDeleteComment(id) {
   DeleteComment(id);
 
   function DeleteComment() {
-
-    console.log("DELETING");
-
     $.ajax({
       url: 'php/HelperFunctions.php',
       type: "POST",

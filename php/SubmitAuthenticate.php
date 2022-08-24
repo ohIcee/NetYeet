@@ -1,35 +1,47 @@
 <?php
-// TODO
-// > CONVERT USERNAMES TO LOWERCASE
-
 require_once 'DBConnect.php';
 
-$AuthInfo = $_POST['authInfo'];
-$AuthInfo = json_decode($AuthInfo, true);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-switch ($AuthInfo['authType']) {
-  case 'login':
-    ProcessLogin();
-    break;
-  case 'register':
-    ProcessRegister();
-    break;
-  case 'forgotpasswordrequest':
-    ProcessForgotPasswordRequest();
-    break;
-  case 'resendconfirmemail':
-    PreSendConfirmationMail();
-    break;
+$AuthInfo = $_POST['authInfo'];
+
+if ($AuthInfo === "anonymous_login") {
+  $_SESSION["isLoggedInAnonymous"] = true;
+  echo "SUCCESS";
+} else {
+  $AuthInfo = json_decode($AuthInfo, true);
+  switch ($AuthInfo['authType']) {
+    case 'login':
+      ProcessLogin();
+      break;
+    case 'register':
+      ProcessRegister();
+      break;
+    case 'forgotpasswordrequest':
+      ProcessForgotPasswordRequest();
+      break;
+    case 'resendconfirmemail':
+      PreSendConfirmationMail();
+      break;
+  }
 }
 
-function ProcessLogin() {
+
+
+function ProcessLogin()
+{
   global $AuthInfo, $db;
 
-  function CheckErrors() {
+  function CheckErrors()
+  {
     global $AuthInfo;
 
-    if ( strlen($AuthInfo['username']) < 5
-      || strlen($AuthInfo['password']) < 5 ) {
+    if (
+      strlen($AuthInfo['username']) < 5
+      || strlen($AuthInfo['password']) < 5
+    ) {
       echo "ERR_InvalidForm";
       exit();
     }
@@ -43,34 +55,37 @@ function ProcessLogin() {
   $row = $stmt->fetch();
 
   $CorrectPassword = $row['Password'];
-  if (password_verify( $AuthInfo['password'], $CorrectPassword )) {
+  if (password_verify($AuthInfo['password'], $CorrectPassword)) {
     if ($row['Active'] == 0) {
       echo "ERR_ACC_NOTCONFIRMED";
       exit();
     } else {
       $_SESSION["loggedUserID"] = $row['ID'];
+      unset($_SESSION["isLoggedInAnonymous"]);
       echo "SUCCESS";
     }
   } else {
     echo "ERR_INCORRECT";
     exit();
   }
-
 }
 
-function ProcessRegister() {
+function ProcessRegister()
+{
   global $AuthInfo, $db;
 
-  function CheckErrors() {
+  function CheckErrors()
+  {
     global $AuthInfo, $db;
     $infoList = array(
       'username',
       'email',
       'password',
       'confirmPassword',
-      'dateOfBirth' );
+      'dateOfBirth'
+    );
     foreach ($infoList as $infoName) {
-      if ( strlen($AuthInfo[$infoName]) < 5 ) {
+      if (strlen($AuthInfo[$infoName]) < 5) {
         echo 'ERR_InvalidForm';
         exit();
       }
@@ -91,7 +106,7 @@ function ProcessRegister() {
     $sql = "SELECT COUNT(Username) AS usrnum FROM users WHERE Username = :username";
     $stmt = $db->prepare($sql);
 
-    $stmt->bindvalue(':username', $AuthInfo['username']);
+    $stmt->bindValue(':username', $AuthInfo['username']);
     $stmt->execute();
 
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -103,7 +118,7 @@ function ProcessRegister() {
     $sql = "SELECT COUNT(Email) AS emailnum FROM users WHERE Email = :email";
     $stmt = $db->prepare($sql);
 
-    $stmt->bindvalue(':email', $AuthInfo['email']);
+    $stmt->bindValue(':email', $AuthInfo['email']);
     $stmt->execute();
 
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -112,13 +127,12 @@ function ProcessRegister() {
       echo 'ERR_DuplicateEmail';
       exit();
     }
-
   }
   CheckErrors();
 
   $passwordHash = password_hash($AuthInfo['password'], PASSWORD_BCRYPT, array("cost" => 12));
-  $dateTime = new DateTime( $AuthInfo['dateOfBirth'] );
-  $formattedDate = date_format( $dateTime, 'Y-m-d' );
+  $dateTime = new DateTime($AuthInfo['dateOfBirth']);
+  $formattedDate = date_format($dateTime, 'Y-m-d');
 
   $sql = "INSERT INTO users (FirstName, LastName, Username, Email, Password, DOB, Gender) VALUES (:firstname, :lastname, :username, :email, :password, :dob, :gender)";
   $stmt = $db->prepare($sql);
@@ -138,10 +152,10 @@ function ProcessRegister() {
   } else {
     echo "ERR_INSERT";
   }
-
 }
 
-function PreSendConfirmationMail() {
+function PreSendConfirmationMail()
+{
 
   global $AuthInfo, $db;
 
@@ -156,13 +170,13 @@ function PreSendConfirmationMail() {
   } else {
     echo "ERR_AlreadyConfirmed";
   }
-
 }
 
-function SendConfirmationMail($email) {
+function SendConfirmationMail($email)
+{
   global $db;
 
-  $ConfirmationCode = md5($username . rand(0, 50));
+  $ConfirmationCode = md5($email . rand(0, 50));
   $sql = "UPDATE users SET ConfirmCode=:confirmcode WHERE Email=:email";
   $stmt = $db->prepare($sql);
   $stmt->bindValue(':confirmcode', $ConfirmationCode);
@@ -172,17 +186,17 @@ function SendConfirmationMail($email) {
     $to      = $email;
     $subject = 'NetYeet Account Confirmation';
     $message = "Please open the following link to confirm your email: \n"
-    . "http://byicee.me/projects/NetYeet/ConfirmEmail.php?cc=" . $ConfirmationCode
-    . "\n\n\n If you didn't request this please ignore the message!";
+      . "localhost/NetYeet/ConfirmEmail.php?cc=" . $ConfirmationCode
+      . "\n\n\n If you didn't request this please ignore the message!";
     $headers = "From: icevx1@gmail.com";
     $result = mail($to, $subject, $message, $headers);
 
     echo "SUCCESS";
   }
-
 }
 
-function ProcessForgotPasswordRequest() {
+function ProcessForgotPasswordRequest()
+{
   global $db, $AuthInfo;
 
   // Check if Account is Activated
@@ -197,7 +211,7 @@ function ProcessForgotPasswordRequest() {
     exit();
   }
 
-  $ConfirmationCode = md5($username . rand(0, 50));
+  $ConfirmationCode = md5($AuthInfo["email"] . rand(0, 50));
   $sql = "UPDATE users SET ConfirmCode=:confirmcode WHERE Email=:email";
   $stmt = $db->prepare($sql);
   $stmt->bindValue(':confirmcode', $ConfirmationCode);
@@ -207,14 +221,11 @@ function ProcessForgotPasswordRequest() {
     $to      = $AuthInfo['email'];
     $subject = 'NetYeet Password Reset';
     $message = "Please open the following link to reset your NetYeet password: \n"
-    . "http://byicee.me/projects/NetYeet/ResetPassword.php?cc=" . $ConfirmationCode
-    . "\n\n\n If you didn't request this please ignore the message!";
-    $headers = "From: " . $ServerMail;
+      . "http://byicee.me/projects/NetYeet/ResetPassword.php?cc=" . $ConfirmationCode
+      . "\n\n\n If you didn't request this please ignore the message!";
+    $headers = "From: icevx1@gmail.com";
     $result = mail($to, $subject, $message, $headers);
 
     echo "SUCCESS";
   }
-
 }
-
-?>

@@ -2,25 +2,12 @@
 
 require_once 'DBConnect.php';
 
-// Used for Live user search
 if (isset($_POST['ajaxCommand'])) {
-	if ($_POST['ajaxCommand'] == "GetSearchResults") {
-		echo GetSearchResults();
-	}
-	if ($_POST['ajaxCommand'] == "GetProfilePreferences") {
-		echo json_encode(GetProfilePreferences($_SESSION['loggedUserID']));
-	}
 	if ($_POST['ajaxCommand'] == "LikePost") {
 		echo LikePost();
 	}
 	if ($_POST['ajaxCommand'] == "UnlikePost") {
 		echo UnlikePost();
-	}
-	if ($_POST['ajaxCommand'] == "GetPost") {
-		echo GetPost($_POST['PostID']);
-	}
-	if ($_POST['ajaxCommand'] == 'GetPostComments') {
-		echo json_encode(GetPostComments($_POST['PostID']));
 	}
 	if ($_POST['ajaxCommand'] == 'PostComment') {
 		echo json_encode(PostComment());
@@ -28,12 +15,31 @@ if (isset($_POST['ajaxCommand'])) {
 	if ($_POST['ajaxCommand'] == 'DeleteComment') {
 		echo DeleteComment();
 	}
-	if ($_POST['ajaxCommand'] == 'GetFollowers') {
+
+	return;
+}
+
+if (isset($_GET["ajaxCommand"])) {
+	if ($_GET['ajaxCommand'] == "GetSearchResults") {
+		echo GetSearchResults();
+	}
+	if ($_GET['ajaxCommand'] == "GetProfilePreferences") {
+		echo json_encode(GetProfilePreferences($_SESSION['loggedUserID']));
+	}
+	if ($_GET['ajaxCommand'] == "GetPost") {
+		echo GetPost($_GET['PostID']);
+	}
+	if ($_GET['ajaxCommand'] == 'GetPostComments') {
+		echo json_encode(GetPostComments($_GET['PostID']));
+	}
+	if ($_GET['ajaxCommand'] == 'GetFollowers') {
 		echo json_encode(GetFollowers());
 	}
-	if ($_POST['ajaxCommand'] == 'GetFollowingUserInfo') {
+	if ($_GET['ajaxCommand'] == 'GetFollowingUserInfo') {
 		echo json_encode(GetFollowingUserInfo());
 	}
+
+	return;
 }
 
 function GetFollowers() {
@@ -41,16 +47,17 @@ function GetFollowers() {
 
 	$sql = "SELECT users.ID, UserFollows.UserID, users.Username, users.ProfilePictureName FROM UserFollows INNER JOIN users ON users.ID=UserFollows.UserID WHERE UserFollows.FollowID=:id";
 	$stmt = $db->prepare($sql);
-	$stmt->bindValue(':id', $_POST['id']);
+	$stmt->bindValue(':id', $_GET['id']);
 	$result = $stmt->execute();
 	$rows = $stmt->fetchAll();
 	return $rows;
 }
 
+
 function GetFollowingUserInfo() {
 	global $db;
 
-	$users = GetFollowingUsers($_POST['id']);
+	$users = GetFollowingUsers($_GET['id']);
 
 	$sql = "SELECT ID, Username, ProfilePictureName FROM users WHERE ";
 
@@ -111,9 +118,9 @@ function PostComment() {
 	$result = $stmt->execute();
 
 	if ($result) {
-		echo "SUCCESS";
+		return "SUCCESS";
 	} else {
-		echo "ERR";
+		return "ERR";
 	}
 }
 
@@ -173,19 +180,6 @@ function GetPostComments($PostID) {
 	return $rows;
 }
 
-// USELESS
-function GetComment($CommentID) {
-	global $db;
-
-	$sql = "SELECT PostComments.ID, users.Username, users.ProfilePictureName, PostComments.Content, PostComments.DateCommented FROM PostComments INNER JOIN users ON PostComments.CommenterID=users.ID WHERE PostComments.ID=:commentid";
-	$stmt = $db->prepare($sql);
-	$stmt->bindValue(':commentid', $CommentID);
-	$stmt->execute();
-	$rows = $stmt->fetch(PDO::FETCH_ASSOC);
-
-	return $rows;
-}
-
 function CompressImage($source, $destination, $quality) {
 
 	$info = getimagesize($source);
@@ -204,6 +198,7 @@ function CompressImage($source, $destination, $quality) {
 	return $destination;
 }
 
+// Get IDs of users the logged in user is following
 function GetFollowingUsers($id) {
 	global $db;
 
@@ -218,6 +213,11 @@ function GetFollowingUsers($id) {
 		array_push($IDs, $value['FollowID']);
 	}
 
+	// Push current User to show own posts
+	if (isset($_SESSION["loggedUserID"])) {
+		array_push($IDs, $_SESSION['loggedUserID']);
+	}
+
 	return $IDs;
 }
 
@@ -226,7 +226,7 @@ function GetSearchResults() {
 
 	$sql = "SELECT ID, Username, ProfilePictureName FROM users WHERE Username LIKE :searchval AND Active=1 LIMIT 5";
 	$stmt = $db->prepare($sql);
-	$stmt->bindValue(':searchval', '%'.$_POST['searchValue'].'%');
+	$stmt->bindValue(':searchval', '%'.$_GET['searchValue'].'%');
 	$stmt->execute();
 	$rows = $stmt->fetchAll();
 
@@ -260,7 +260,12 @@ function GetProfilePreferences($profileID) {
 function GetUserPosts($ID) {
 	global $db;
 
-	$sql = "SELECT posts.ID, posts.PublishDate, posts.Content, posts.Type, posts.ImageName, posts.Privacy, users.Username FROM posts INNER JOIN users ON posts.PosterID = users.ID WHERE posts.PosterID = :posterid ORDER BY PublishDate DESC";
+	$sql = "SELECT posts.ID, posts.PublishDate, posts.Content, posts.Type, posts.ImageName, posts.Privacy, users.Username 
+			FROM user_posts 
+			INNER JOIN posts ON user_posts.PostID = posts.ID 
+			INNER JOIN users ON user_posts.UserID = users.ID 
+			WHERE user_posts.UserID = :posterid 
+			ORDER BY PublishDate DESC";
 	$stmt = $db->prepare($sql);
 	$stmt->bindValue(':posterid', $ID);
 	$stmt->execute();
@@ -298,19 +303,23 @@ function GetFollowingUsersPosts() {
 
 	$IDs = GetFollowingUsers($_SESSION['loggedUserID']);
 
-	$sql = "SELECT posts.ID, posts.PublishDate, posts.Content, posts.Type, posts.ImageName, posts.Privacy, users.ID as UserID, users.Username, users.ProfilePictureName FROM posts INNER JOIN users ON posts.PosterID = users.ID WHERE ";
+	$sql = "SELECT posts.ID, posts.PublishDate, posts.Content, posts.Type, posts.ImageName, posts.Privacy, users.ID as UserID, users.Username, users.ProfilePictureName 
+			FROM user_posts 
+			INNER JOIN users ON user_posts.UserID = users.ID
+			INNER JOIN posts ON user_posts.PostID = posts.ID
+			WHERE ";
 
 	foreach ($IDs as $key => $value) {
 		if ($key == 0) {
-			$sql .= "posts.PosterID=:own or posts.PosterID=:u".$key;
+			$sql .= " user_posts.UserID=:own or user_posts.UserID=:u".$key;
 		} else {
-			$sql .= " or posts.PosterID=:u".$key;
+			$sql .= " or user_posts.UserID=:u".$key;
 		}
 	}
 
 	$sql .= " ORDER BY PublishDate DESC";
 	$stmt = $db->prepare($sql);
-	$stmt->bindValue('own', $_SESSION['loggedUserID']);
+	$stmt->bindValue(':own', $_SESSION['loggedUserID']);
 
 	foreach ($IDs as $key => $value) {
 		$stmt->bindValue(':u'.$key, $value);
@@ -387,7 +396,7 @@ function DeletePost($postID) {
 	global $db;
 
 	// SELECT IMAGE NAME
-	$sql = "SELECT ImageName FROM posts WHERE PosterID=:userid AND ID=:postid";
+	$sql = "SELECT ImageName FROM user_posts INNER JOIN posts ON user_posts.ID=posts.ID WHERE user_posts.UserID=:userid AND posts.ID=:postid";
 	$stmt = $db->prepare($sql);
 	$stmt->bindValue(':userid', $_SESSION['loggedUserID']);
 	$stmt->bindValue(':postid', $postID);
@@ -395,10 +404,27 @@ function DeletePost($postID) {
 	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	if ($result) {
-		// REMOVE FROM DB
-		$sql = "DELETE FROM posts WHERE PosterID=:userid AND ID=:postid";
+		// REMOVE POST COMMENTS
+		$sql = "DELETE FROM PostComments WHERE PostID=:postid";
 		$stmt = $db->prepare($sql);
-		$stmt->bindValue(':userid', $_SESSION['loggedUserID']);
+		$stmt->bindValue(':postid', $postID);
+		$stmt->execute();
+
+		// REMOVE POST LIKES
+		$sql = "DELETE FROM LikedPosts WHERE PostID=:postid";
+		$stmt = $db->prepare($sql);
+		$stmt->bindValue(':postid', $postID);
+		$stmt->execute();
+
+		// REMOVE POST FROM DB user_posts
+		$sql = "DELETE FROM user_posts WHERE PostID=:postid";
+		$stmt = $db->prepare($sql);
+		$stmt->bindValue(':postid', $postID);
+		$stmt->execute();
+
+		// REMOVE POST FROM DB
+		$sql = "DELETE FROM posts WHERE ID=:postid";
+		$stmt = $db->prepare($sql);
 		$stmt->bindValue(':postid', $postID);
 		$result = $stmt->execute();
 

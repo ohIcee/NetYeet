@@ -8,7 +8,7 @@ $('#TopSearchInput').keyup(function() {
 function GetSearchResults(val) {
   $.ajax({
     url: 'php/HelperFunctions.php',
-    type: "POST",
+    type: "GET",
     data: {
       ajaxCommand: 'GetSearchResults',
       searchValue: val
